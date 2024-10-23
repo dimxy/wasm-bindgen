@@ -13,6 +13,9 @@
        * we set the `type` to `module` to enable support for ES modules.
        */
       const worker = new Worker("/worker.js", { type: "module" });
+      const worker2 = new Worker("/worker.js", { type: "module" });
+      //self.wasm = await import("./pkg/synchronous_instantiation.js")
+      //import * as wasm from "./pkg/synchronous_instantiation.js";
 
       /**
        * Here we listen for messages from the worker.
@@ -31,6 +34,34 @@
              */
             fetch("/pkg/synchronous_instantiation_bg.wasm")
               .then((response) => response.arrayBuffer())
+              .then(async (bytes) => {
+
+                self.wasm = await import("./pkg/synchronous_instantiation.js")
+
+                wasm.initSync({ module: bytes });
+                console.log("window wasm.init'ed");
+
+                await new Promise(r => setTimeout(r, 2000));
+                console.log("window calling wasm.greet");
+                wasm.greet("in-window");
+                worker.postMessage(bytes, [bytes]);
+              });
+            break;
+          }
+          default: {
+            break;
+          }
+        }
+      };
+
+      worker2.onmessage = ({ data }) => {
+        const { type } = data;
+
+        switch (type) {
+          case "FETCH_WASM": {
+
+            fetch("/pkg/synchronous_instantiation_bg.wasm")
+              .then((response) => response.arrayBuffer())
               .then((bytes) => {
                 worker.postMessage(bytes, [bytes]);
               });
@@ -41,6 +72,7 @@
           }
         }
       };
+
     </script>
   </body>
 </html>
