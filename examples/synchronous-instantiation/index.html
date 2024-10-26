@@ -41,10 +41,10 @@
                 wasm.initSync({ module: bytes });
                 console.log("window wasm.init'ed");
 
-                await new Promise(r => setTimeout(r, 2000));
+                //await new Promise(r => setTimeout(r, 2000));
                 console.log("window calling wasm.greet");
-                wasm.greet("in-window");
-                worker.postMessage(bytes, [bytes]);
+                wasm.greet("in-window"); // calling wasm in main
+                worker.postMessage(bytes, [bytes]); // ask worker to call wasm
               });
             break;
           }
@@ -63,7 +63,7 @@
             fetch("/pkg/synchronous_instantiation_bg.wasm")
               .then((response) => response.arrayBuffer())
               .then((bytes) => {
-                worker.postMessage(bytes, [bytes]);
+                worker2.postMessage(bytes, [bytes]); // ask worker to call wasm
               });
             break;
           }
